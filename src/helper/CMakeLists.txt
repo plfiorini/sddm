@@ -12,6 +12,8 @@ set(HELPER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/common/SafeDataStream.cpp
     ${CMAKE_SOURCE_DIR}/src/common/SignalHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/common/SignalHandler.h
+    ${CMAKE_SOURCE_DIR}/src/common/XAuth.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/XAuth.h
     Backend.cpp
     HelperApp.cpp
     UserSession.cpp
@@ -67,3 +69,22 @@ if(JOURNALD_FOUND)
 endif()
 
 install(TARGETS sddm-helper RUNTIME DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}")
+
+# Xorg user helper
+set(X11_HELPER_SOURCES
+    ${CMAKE_SOURCE_DIR}/src/common/Configuration.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/Configuration.h
+    ${CMAKE_SOURCE_DIR}/src/common/ConfigReader.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/ConfigReader.h
+    ${CMAKE_SOURCE_DIR}/src/common/SignalHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/SignalHandler.h
+    ${CMAKE_SOURCE_DIR}/src/common/XAuth.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/XAuth.h
+    HelperStartXorgUser.cpp
+)
+add_executable(sddm-helper-x11 ${X11_HELPER_SOURCES})
+target_link_libraries(sddm-helper-x11 Qt5::Core)
+if(JOURNALD_FOUND)
+    target_link_libraries(sddm-helper-x11 ${JOURNALD_LIBRARIES})
+endif()
+install(TARGETS sddm-helper-x11 RUNTIME DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}")

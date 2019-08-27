@@ -37,6 +37,9 @@ namespace SDDM {
         enum NumState { NUM_NONE, NUM_SET_ON, NUM_SET_OFF };
 
         //  Name                   Type         Default value                                   Description
+        // TODO: In SDDM 2.0 we want x11-user to be the default
+        Entry(DisplayServer,       QString,     _S("x11"),                                      _S("Which display server should be used.\n"
+                                                                                                   "Valid values are: x11, x11-user."));
         Entry(HaltCommand,         QString,     _S(HALT_COMMAND),                               _S("Halt command"));
         Entry(RebootCommand,       QString,     _S(REBOOT_COMMAND),                             _S("Reboot command"));
         Entry(Numlock,             NumState,    NUM_NONE,                                       _S("Initial NumLock state. Can be on, off or none.\n"
