@@ -25,6 +25,7 @@
 #include "DaemonApp.h"
 #include "DisplayManager.h"
 #include "XorgDisplayServer.h"
+#include "XorgUserDisplayServer.h"
 #include "Seat.h"
 #include "SocketServer.h"
 #include "Greeter.h"
@@ -45,18 +46,44 @@
 
 #include "Login1Manager.h"
 #include "Login1Session.h"
+#include "XorgUtils.h"
 #include "VirtualTerminal.h"
 
 namespace SDDM {
     Display::Display(Seat *parent) : QObject(parent),
         m_auth(new Auth(this)),
-        m_displayServer(new XorgDisplayServer(this)),
         m_seat(parent),
         m_socketServer(new SocketServer(this)),
         m_greeter(new Greeter(this)) {
 
         // Allocate vt
         m_terminalId = VirtualTerminal::setUpNewVt();
+
+        // Save display server type
+        const QString &displayServerType = mainConfig.DisplayServer.get().toLower();
+        if (displayServerType == QLatin1String("x11"))
+            m_displayServerType = X11DisplayServer;
+        else if (displayServerType == QStringLiteral("x11-user"))
+            m_displayServerType = X11UserDisplayServer;
+        else {
+            qWarning("\"%s\" is an invalid value for General.DisplayServer: fall back to \"x11\"",
+                     qPrintable(displayServerType));
+            m_displayServerType = X11DisplayServer;
+        }
+
+        // Create display server
+        switch (m_displayServerType) {
+        case X11DisplayServer:
+            m_displayServer = new XorgDisplayServer(this);
+            break;
+        case X11UserDisplayServer:
+            m_displayServer = new XorgUserDisplayServer(this);
+            m_greeter->setDisplayServerCommand(xorgUserCommand(this));
+            break;
+        }
+
+        // Print what VT we are using for more information
+        qDebug("Using VT %d", m_terminalId);
 
         // respond to authentication requests
         m_auth->setVerbose(true);
@@ -81,6 +108,16 @@ namespace SDDM {
 
     Display::~Display() {
         stop();
+    }
+
+    Display::DisplayServerType Display::displayServerType() const
+    {
+        return m_displayServerType;
+    }
+
+    DisplayServer *Display::displayServer() const
+    {
+        return m_displayServer;
     }
 
     QString Display::displayId() const {
@@ -175,7 +212,8 @@ namespace SDDM {
 
         // set greeter params
         m_greeter->setDisplay(this);
-        m_greeter->setAuthPath(qobject_cast<XorgDisplayServer *>(m_displayServer)->authPath());
+        if (qobject_cast<XorgDisplayServer *>(m_displayServer))
+            m_greeter->setAuthPath(qobject_cast<XorgDisplayServer *>(m_displayServer)->authPath());
         m_greeter->setSocket(m_socketServer->socketAddress());
         m_greeter->setTheme(findGreeterTheme());
 
@@ -311,19 +349,15 @@ namespace SDDM {
         // last session later, in slotAuthenticationFinished()
         m_sessionName = session.fileName();
 
+        // New VT
+        m_lastSession.setVt(VirtualTerminal::setUpNewVt());
+
         // some information
         qDebug() << "Session" << m_sessionName << "selected, command:" << session.exec();
 
         QProcessEnvironment env;
 
-        if (seat()->name() == QLatin1String("seat0")) {
-            // Use the greeter VT, for wayland sessions the helper overwrites this
-            env.insert(QStringLiteral("XDG_VTNR"), QString::number(terminalId()));
-        }
-
         env.insert(QStringLiteral("PATH"), mainConfig.Users.DefaultPath.get());
-        if (session.xdgSessionType() == QLatin1String("x11"))
-            env.insert(QStringLiteral("DISPLAY"), name());
         env.insert(QStringLiteral("XDG_SEAT_PATH"), daemonApp->displayManager()->seatPath(seat()->name()));
         env.insert(QStringLiteral("XDG_SESSION_PATH"), daemonApp->displayManager()->sessionPath(QStringLiteral("Session%1").arg(daemonApp->newSessionId())));
         env.insert(QStringLiteral("DESKTOP_SESSION"), session.desktopSession());
@@ -331,9 +365,15 @@ namespace SDDM {
         env.insert(QStringLiteral("XDG_SESSION_CLASS"), QStringLiteral("user"));
         env.insert(QStringLiteral("XDG_SESSION_TYPE"), session.xdgSessionType());
         env.insert(QStringLiteral("XDG_SEAT"), seat()->name());
+        env.insert(QStringLiteral("XDG_VTNR"), QString::number(m_lastSession.vt()));
         env.insert(QStringLiteral("XDG_SESSION_DESKTOP"), session.desktopNames());
 
         m_auth->insertEnvironment(env);
+
+        if (session.xdgSessionType() == QLatin1String("x11"))
+            m_auth->setDisplayServerCommand(xorgUserCommand(this));
+        else
+            m_auth->setDisplayServerCommand(QStringLiteral());
 
         m_auth->setUser(user);
         if (m_reuseSessionId.isNull()) {
@@ -351,7 +391,8 @@ namespace SDDM {
                 manager.UnlockSession(m_reuseSessionId);
                 manager.ActivateSession(m_reuseSessionId);
             } else {
-                m_auth->setCookie(qobject_cast<XorgDisplayServer *>(m_displayServer)->cookie());
+                if (qobject_cast<XorgDisplayServer *>(m_displayServer))
+                    m_auth->setCookie(qobject_cast<XorgDisplayServer *>(m_displayServer)->cookie());
             }
 
             // save last user and last session
