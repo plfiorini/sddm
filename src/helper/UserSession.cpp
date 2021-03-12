@@ -70,11 +70,12 @@ namespace SDDM {
                 auto *notifier = new QSocketNotifier(m_displayServerPipeFds[0], QSocketNotifier::Read, this);
                 connect(notifier, &QSocketNotifier::activated, this, &UserSession::handleDisplayServerPipe);
 
-                qInfo() << "Starting greeter session:" << m_path << "with display server:" << m_displayServerCmd;
                 const auto args = QStringList()
                         << QStringLiteral("--fd") << QString::number(m_displayServerPipeFds[1])
                         << QStringLiteral("--server") << m_displayServerCmd
                         << QStringLiteral("--client") << m_path;
+
+                qInfo() << "Starting greeter session:" << m_path << "with display server:" << args;
                 QProcess::start(QStringLiteral(LIBEXEC_INSTALL_DIR "/sddm-helper-x11"), args);
             }
         } else if (env.value(QStringLiteral("XDG_SESSION_TYPE")) == QLatin1String("x11")) {
@@ -84,7 +85,10 @@ namespace SDDM {
                 QProcess::start(cmd);
             } else {
                 qInfo() << "Starting:" << cmd << "with display server:" << m_displayServerCmd;
-                QProcess::start(QStringLiteral(LIBEXEC_INSTALL_DIR "/sddm-helper-x11"), {m_displayServerCmd, cmd});
+                QProcess::start(QStringLiteral(LIBEXEC_INSTALL_DIR "/sddm-helper-x11"), {
+                                        QStringLiteral("--server"), m_displayServerCmd,
+                                        QStringLiteral("--client"), cmd
+                });
             }
         } else if (env.value(QStringLiteral("XDG_SESSION_TYPE")) == QLatin1String("wayland")) {
             const QString cmd = QStringLiteral("%1 %2").arg(mainConfig.Wayland.SessionCommand.get()).arg(m_path);
