@@ -64,14 +64,6 @@ public:
         // Create xauthority
         m_xauth.setup();
 
-        // Generate xauthority file
-        // For the X server's copy, the display number doesn't matter.
-        // An empty file would result in no access control!
-        if (!m_xauth.addCookie(m_display)) {
-            qCritical("Failed to write xauth file");
-            return false;
-        }
-
         // Start server process
         if (!startServer())
             return false;
@@ -224,6 +216,14 @@ private:
         displayNumber.remove(displayNumber.size() -1, 1); // trim trailing whitespace
         m_display = QString::fromLocal8Bit(displayNumber);
         qDebug("X11 display: %s", qPrintable(m_display));
+
+        // Generate xauthority file
+        // For the X server's copy, the display number doesn't matter.
+        // An empty file would result in no access control!
+        if (!m_xauth.addCookie(m_display)) {
+            qCritical("Failed to write xauth file");
+            return false;
+        }
 
         // Send the display name to the caller
         if (m_fd > 0)
