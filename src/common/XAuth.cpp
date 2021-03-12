@@ -71,7 +71,7 @@ void XAuth::setup()
     QDir().mkpath(m_authDir);
 
     // Set path
-    m_authPath = QStringLiteral("%1/%2").arg(m_authDir).arg(QUuid::createUuid().toString());
+    m_authPath = QStringLiteral("%1/%2").arg(m_authDir).arg(QUuid::createUuid().toString(QUuid::WithoutBraces));
     qDebug() << "Xauthority path:" << m_authPath;
 
     // Generate cookie
