@@ -200,6 +200,7 @@ namespace SDDM {
                                    QStringLiteral("XDG_DATA_DIRS")
             }, sysenv, env);
 
+            env.insert(QStringLiteral("SDDM_JOURNAL_ENABLED"), QStringLiteral("1"));
             env.insert(QStringLiteral("PATH"), mainConfig.Users.DefaultPath.get());
             env.insert(QStringLiteral("XCURSOR_THEME"), xcursorTheme);
             env.insert(QStringLiteral("XDG_SEAT"), m_display->seat()->name());

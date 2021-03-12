@@ -42,6 +42,7 @@ namespace SDDM {
         self = this;
 
         qInstallMessageHandler(SDDM::DaemonMessageHandler);
+        setupJournalFds(QStringLiteral("sddm"));
 
         // log message
         qDebug() << "Initializing...";

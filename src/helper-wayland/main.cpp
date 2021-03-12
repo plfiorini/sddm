@@ -21,6 +21,7 @@
 #include <QCoreApplication>
 #include <QDebug>
 
+#include "MessageHandler.h"
 #include "SignalHandler.h"
 
 #include "waylanduserhelper.h"
@@ -29,6 +30,9 @@ using namespace SDDM;
 
 int main(int argc, char *argv[])
 {
+    qInstallMessageHandler(SDDM::HelperMessageHandler);
+    setupJournalFds(QStringLiteral("sddm-helper-wayland"));
+
     QCoreApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("sddm-helper-wayland"));
     app.setApplicationVersion(QStringLiteral(SDDM_VERSION));

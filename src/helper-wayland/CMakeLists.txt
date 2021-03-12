@@ -8,6 +8,8 @@ set(SOURCES
     ${CMAKE_SOURCE_DIR}/src/common/Configuration.h
     ${CMAKE_SOURCE_DIR}/src/common/ConfigReader.cpp
     ${CMAKE_SOURCE_DIR}/src/common/ConfigReader.h
+    ${CMAKE_SOURCE_DIR}/src/common/MessageHandler.cpp
+    ${CMAKE_SOURCE_DIR}/src/common/MessageHandler.h
     ${CMAKE_SOURCE_DIR}/src/common/SignalHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/common/SignalHandler.h
     main.cpp
@@ -18,4 +20,7 @@ set(SOURCES
 )
 add_executable(sddm-helper-wayland ${SOURCES})
 target_link_libraries(sddm-helper-wayland Qt5::Core)
+if(JOURNALD_FOUND)
+    target_link_libraries(sddm-helper-wayland ${JOURNALD_LIBRARIES})
+endif()
 install(TARGETS sddm-helper-wayland RUNTIME DESTINATION "${CMAKE_INSTALL_LIBEXECDIR}")

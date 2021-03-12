@@ -21,6 +21,7 @@
 #include <QCoreApplication>
 
 #include "Constants.h"
+#include "MessageHandler.h"
 #include "SignalHandler.h"
 #include "xorguserhelper.h"
 
@@ -28,6 +29,9 @@ using namespace SDDM;
 
 int main(int argc, char *argv[])
 {
+    qInstallMessageHandler(SDDM::HelperMessageHandler);
+    setupJournalFds(QStringLiteral("sddm-helper-x11"));
+
     QCoreApplication app(argc, argv);
     app.setApplicationName(QStringLiteral("sddm-helper-x11"));
     app.setApplicationVersion(QStringLiteral(SDDM_VERSION));

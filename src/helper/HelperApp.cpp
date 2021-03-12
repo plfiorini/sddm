@@ -49,6 +49,7 @@ namespace SDDM {
             , m_session(new UserSession(this))
             , m_socket(new QLocalSocket(this)) {
         qInstallMessageHandler(HelperMessageHandler);
+        setupJournalFds(QStringLiteral("sddm-helper"));
 
         m_signalHandler = new SignalHandler(this);
         m_signalHandler->initialize();

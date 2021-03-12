@@ -298,6 +298,7 @@ int main(int argc, char **argv)
 {
     // Install message handler
     qInstallMessageHandler(SDDM::GreeterMessageHandler);
+    SDDM::setupJournalFds(QStringLiteral("sddm-greeter"));
 
     // We set an attribute based on the platform we run on.
     // We only know the platform after we constructed QGuiApplication
